@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Post = require("../models/Post");
 const Message = require("../models/Message");
@@ -26,8 +27,15 @@ const getUsersByIdentity = async (identities) => {
   const unique = [...new Set((identities || []).filter(Boolean))];
   if (unique.length === 0) return [];
 
+  const objectIdCandidates = unique.filter((value) => mongoose.Types.ObjectId.isValid(value));
+  const uidCandidates = unique;
+
+  if (objectIdCandidates.length === 0) {
+    return User.find({ uid: { $in: uidCandidates } }).select("uid name email photo bio location interests");
+  }
+
   return User.find({
-    $or: [{ _id: { $in: unique } }, { uid: { $in: unique } }],
+    $or: [{ _id: { $in: objectIdCandidates } }, { uid: { $in: uidCandidates } }],
   }).select("uid name email photo bio location interests");
 };
 
