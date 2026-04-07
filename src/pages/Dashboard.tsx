@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, Check, X, Trash2, Users, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { buildApiUrl } from "@/lib/api";
 
 const Dashboard = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -13,7 +14,7 @@ const Dashboard = () => {
 
   // 🔥 FETCH EVENTS
   const fetchEvents = () => {
-    fetch("http://localhost:5002/api/posts")
+    fetch(buildApiUrl("/api/posts"))
       .then((res) => res.json())
       .then(async (data) => {
         console.log("ALL EVENTS:", data);
@@ -25,7 +26,7 @@ const Dashboard = () => {
         const detailsEntries = await Promise.all(
           my.map(async (event: any) => {
             try {
-              const response = await fetch(`http://localhost:5002/api/posts/${event._id}/request-details?hostUserId=${user._id}`);
+              const response = await fetch(buildApiUrl(`/api/posts/${event._id}/request-details?hostUserId=${user._id}`));
               const details = await response.json();
               return [event._id, details.requests || []];
             } catch {
@@ -50,7 +51,7 @@ const Dashboard = () => {
 
   // 🔥 DELETE
   const deleteEvent = async (id: string) => {
-    await fetch(`http://localhost:5002/api/posts/${id}`, {
+    await fetch(buildApiUrl(`/api/posts/${id}`), {
       method: "DELETE",
     });
     fetchEvents();
@@ -58,7 +59,7 @@ const Dashboard = () => {
 
   // 🔥 APPROVE
   const approve = async (eventId: string, uid: string) => {
-    await fetch(`http://localhost:5002/api/posts/${eventId}/approve`, {
+    await fetch(buildApiUrl(`/api/posts/${eventId}/approve`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -70,7 +71,7 @@ const Dashboard = () => {
 
   // 🔥 REJECT
   const reject = async (eventId: string, uid: string) => {
-    await fetch(`http://localhost:5002/api/posts/${eventId}/reject`, {
+    await fetch(buildApiUrl(`/api/posts/${eventId}/reject`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -4,11 +4,11 @@ import { MapPin, Calendar, Clock, ArrowLeft, Users, UserCheck, Trash2, Check, X,
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { MAPBOX_TOKEN } from "@/mapbox";
+import { API_BASE_URL } from "@/lib/api";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5002";
 
 const EventDetail = () => {
   const { id } = useParams();

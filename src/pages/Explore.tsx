@@ -3,6 +3,7 @@ import { Search, Filter } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { buildApiUrl } from "@/lib/api";
 
 const categories = ["All", "Adventure", "Wellness", "Sports", "Creative", "Food & Drink", "Photography", "Technology", "Music", "Concerts", "Workshops", "Business", "Education", "Art", "Gaming", "Fitness", "Networking", "Social", "Charity"];
 const priceFilters = ["All", "Free", "Paid"];
@@ -16,7 +17,7 @@ const Explore = () => {
 
   // 🔥 FETCH EVENTS
   useEffect(() => {
-    fetch("http://localhost:5002/api/posts")
+    fetch(buildApiUrl("/api/posts"))
       .then(res => res.json())
       .then(data => {
         // Keep all events for now so event listing always shows created events.

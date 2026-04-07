@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase";
+import { buildApiUrl } from "@/lib/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -21,7 +22,7 @@ const Login = () => {
       const token = await firebaseUser.getIdToken();
 
       // 🔗 sync with backend
-      const res = await fetch("http://localhost:5002/api/users/sync", {
+      const res = await fetch(buildApiUrl("/api/users/sync"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -63,7 +64,7 @@ const Login = () => {
       const token = await firebaseUser.getIdToken();
 
       // 🔗 sync with backend
-      const res = await fetch("http://localhost:5002/api/users/sync", {
+      const res = await fetch(buildApiUrl("/api/users/sync"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

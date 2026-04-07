@@ -4,6 +4,7 @@ import { Camera, Edit2, Save, X, MapPin, Calendar, Users, Star, MessageCircle, I
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { auth } from "@/firebase";
+import { buildApiUrl } from "@/lib/api";
 
 interface UserProfile {
   _id: string;
@@ -79,8 +80,8 @@ const Profile = () => {
   const fetchUserData = async (userId: string) => {
     try {
       const [eventsRes, reviewsRes] = await Promise.all([
-        fetch("http://localhost:5002/api/posts"),
-        fetch(`http://localhost:5002/api/reviews?userId=${userId}`)
+        fetch(buildApiUrl("/api/posts")),
+        fetch(buildApiUrl(`/api/reviews?userId=${userId}`))
       ]);
 
       const eventsData = await eventsRes.json();
@@ -126,7 +127,7 @@ const Profile = () => {
         payload.photoDataUrl = photoDataUrl;
       }
 
-      const response = await fetch("http://localhost:5002/api/users/update", {
+      const response = await fetch(buildApiUrl("/api/users/update"), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "@/firebase";
+import { buildApiUrl } from "@/lib/api";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const Signup = () => {
       const token = await firebaseUser.getIdToken();
 
       // Sync with backend
-      const res = await fetch("http://localhost:5002/api/users/sync", {
+      const res = await fetch(buildApiUrl("/api/users/sync"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -63,7 +64,7 @@ const Signup = () => {
       const token = await firebaseUser.getIdToken();
 
       // Sync with backend
-      const res = await fetch("http://localhost:5002/api/users/sync", {
+      const res = await fetch(buildApiUrl("/api/users/sync"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

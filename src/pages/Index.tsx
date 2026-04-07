@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EventCard from "@/components/EventCard";
 import { useEffect, useState } from "react";
+import { buildApiUrl } from "@/lib/api";
 
 const categories = ["All", "Adventure", "Wellness", "Sports", "Creative", "Food & Drink", "Photography"];
 
@@ -20,7 +21,7 @@ const Index = () => {
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch("http://localhost:5002/api/posts");
+      const res = await fetch(buildApiUrl("/api/posts"));
       if (!res.ok) {
         console.error("Failed to fetch events:", res.status);
         setEvents([]);

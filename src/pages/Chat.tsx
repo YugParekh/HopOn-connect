@@ -3,9 +3,9 @@ import { useParams } from "react-router-dom";
 import { Send, MessageCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
+import { API_BASE_URL } from "@/lib/api";
 
-const configuredApiUrl = import.meta.env.VITE_API_URL;
-const API_CANDIDATES = [configuredApiUrl, "http://localhost:5002", "http://localhost:5000"]
+const API_CANDIDATES = [API_BASE_URL]
   .filter(Boolean)
   .filter((value, index, array) => array.indexOf(value) === index) as string[];
 
@@ -27,7 +27,7 @@ const resolveApiBaseUrl = async () => {
     if (healthy) return candidate;
   }
 
-  return API_CANDIDATES[0] || "http://localhost:5000";
+  return API_CANDIDATES[0] || "";
 };
 
 interface Message {
@@ -45,7 +45,7 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
-  const [apiBaseUrl, setApiBaseUrl] = useState<string>(API_CANDIDATES[0] || "http://localhost:5000");
+  const [apiBaseUrl, setApiBaseUrl] = useState<string>(API_CANDIDATES[0] || "");
   const [event, setEvent] = useState<any>(null);
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);

@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Bell, Moon, Sun } from "lucide-react";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5002";
+import { API_BASE_URL } from "@/lib/api";
 
 type Theme = "light" | "dark";
 

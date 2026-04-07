@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { auth } from "@/firebase";
 import { generateEventDescription, generateEventTitle } from "@/lib/aiDescriptionGenerator";
 import { MAPBOX_TOKEN } from "@/mapbox";
+import { buildApiUrl } from "@/lib/api";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -51,7 +52,7 @@ const CreateEvent = () => {
       setIsEditing(true);
       setEventId(id);
       // Fetch event data
-      fetch(`http://localhost:5002/api/posts/${id}`)
+      fetch(buildApiUrl(`/api/posts/${id}`))
         .then(res => res.json())
         .then(data => {
           setForm({
@@ -261,7 +262,7 @@ const CreateEvent = () => {
       };
 
       if (isEditing && eventId) {
-        await fetch(`http://localhost:5002/api/posts/${eventId}`, {
+        await fetch(buildApiUrl(`/api/posts/${eventId}`), {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -270,7 +271,7 @@ const CreateEvent = () => {
         });
         alert("Event created 🚀");
       } else {
-        await fetch("http://localhost:5002/api/posts", {
+        await fetch(buildApiUrl("/api/posts"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

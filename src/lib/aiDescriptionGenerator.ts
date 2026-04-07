@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5002";
+import { API_BASE_URL } from "@/lib/api";
 
 export const generateEventDescription = async (basicIdea: string): Promise<string> => {
   try {
