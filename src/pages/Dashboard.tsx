@@ -6,6 +6,7 @@ import { buildApiUrl } from "@/lib/api";
 
 const Dashboard = () => {
   const [events, setEvents] = useState<any[]>([]);
+  const [error, setError] = useState<string>("");
   const [tab, setTab] = useState("my");
   const [requestDetailsMap, setRequestDetailsMap] = useState<Record<string, any[]>>({});
   const [selectedRequester, setSelectedRequester] = useState<any | null>(null);
@@ -13,30 +14,42 @@ const Dashboard = () => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // 🔥 FETCH EVENTS
-  const fetchEvents = () => {
-    fetch(buildApiUrl("/api/posts"))
-      .then((res) => res.json())
-      .then(async (data) => {
-        console.log("ALL EVENTS:", data);
-        console.log("User _id:", user._id);
-        const my = data.filter((e) => e.userId === user._id);
-        console.log("My events:", my);
-        setEvents(data);
+  const fetchEvents = async () => {
+    try {
+      setError("");
+      const response = await fetch(buildApiUrl("/api/posts"));
+      const data = await response.json();
 
-        const detailsEntries = await Promise.all(
-          my.map(async (event: any) => {
-            try {
-              const response = await fetch(buildApiUrl(`/api/posts/${event._id}/request-details?hostUserId=${user._id}`));
-              const details = await response.json();
-              return [event._id, details.requests || []];
-            } catch {
-              return [event._id, []];
-            }
-          })
-        );
+      if (!response.ok || !Array.isArray(data)) {
+        setEvents([]);
+        setRequestDetailsMap({});
+        setError("Unable to load dashboard events right now.");
+        return;
+      }
 
-        setRequestDetailsMap(Object.fromEntries(detailsEntries));
-      });
+      const my = data.filter((event: any) => event.userId === user._id);
+      setEvents(data);
+
+      const detailsEntries = await Promise.all(
+        my.map(async (event: any) => {
+          try {
+            const requestDetailsResponse = await fetch(
+              buildApiUrl(`/api/posts/${event._id}/request-details?hostUserId=${user._id}`)
+            );
+            const details = await requestDetailsResponse.json();
+            return [event._id, details.requests || []];
+          } catch {
+            return [event._id, []];
+          }
+        })
+      );
+
+      setRequestDetailsMap(Object.fromEntries(detailsEntries));
+    } catch {
+      setEvents([]);
+      setRequestDetailsMap({});
+      setError("Unable to load dashboard events right now.");
+    }
   };
 
   useEffect(() => {
@@ -87,6 +100,12 @@ const Dashboard = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-10">
         <h1 className="text-4xl font-bold mb-8">Dashboard</h1>
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* 🔘 TABS */}
         <div className="flex gap-4 mb-10">
