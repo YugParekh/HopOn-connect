@@ -201,125 +201,125 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* ─── Hero Banner ─────────────────────────────────────── */}
-      <div className="h-40 bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-700 relative" />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-16">
 
-      {/* ─── Avatar row ──────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14 mb-6">
-          {/* Avatar */}
-          <div className="relative shrink-0">
-            <img
-              src={photoPreview || user.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=128&background=000&color=fff`}
-              alt={user.name}
-              className="w-28 h-28 rounded-full object-cover border-4 border-background shadow-lg"
-            />
-            {isEditing && (
-              <button
-                onClick={() => photoInputRef.current?.click()}
-                className="absolute bottom-1 right-1 bg-primary text-primary-foreground p-1.5 rounded-full shadow hover:opacity-90 transition"
-              >
-                <Camera size={14} />
-              </button>
-            )}
-            <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
-          </div>
+        {/* ─── Profile Header Card ─────────────────────────────── */}
+        <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-5">
 
-          {/* Name + actions */}
-          <div className="flex-1 pb-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{user.name}</h1>
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <img
+                src={photoPreview || user.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=128&background=random&color=fff`}
+                alt={user.name}
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-border shadow-sm"
+              />
+              {isEditing && (
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-1.5 rounded-full shadow hover:opacity-90 transition"
+                >
+                  <Camera size={13} />
+                </button>
+              )}
+              <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+            </div>
 
-              {/* Trust level pill */}
-              {trustScore && (
-                <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${trustLevelColor(trustScore.level)}`}>
-                  <ShieldCheck size={13} />
-                  {trustScore.level}
-                </span>
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">{user.name}</h1>
+
+                {/* Trust level pill */}
+                {trustScore && (
+                  <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${trustLevelColor(trustScore.level)}`}>
+                    <ShieldCheck size={12} />
+                    {trustScore.level}
+                  </span>
+                )}
+
+                {/* Edit / Save / Cancel */}
+                {!isEditing ? (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="ml-auto flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full border border-border hover:bg-muted transition-colors"
+                  >
+                    <Edit2 size={13} /> Edit Profile
+                  </button>
+                ) : (
+                  <div className="ml-auto flex gap-2">
+                    <button onClick={handleSave} className="flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
+                      <Save size={13} /> Save
+                    </button>
+                    <button onClick={() => setIsEditing(false)} className="flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full border border-border hover:bg-muted transition-colors">
+                      <X size={13} /> Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+
+              {user.location && (
+                <p className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
+                  <MapPin size={13} /> {user.location}
+                </p>
               )}
 
-              {/* Edit / Save / Cancel */}
-              {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="ml-auto flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full border border-border hover:bg-muted transition-colors"
-                >
-                  <Edit2 size={14} /> Edit Profile
-                </button>
-              ) : (
-                <div className="ml-auto flex gap-2">
-                  <button onClick={handleSave} className="flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
-                    <Save size={14} /> Save
-                  </button>
-                  <button onClick={() => setIsEditing(false)} className="flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full border border-border hover:bg-muted transition-colors">
-                    <X size={14} /> Cancel
-                  </button>
+              {/* Bio */}
+              {!isEditing && user.bio && (
+                <p className="text-sm text-muted-foreground leading-relaxed mt-3">{user.bio}</p>
+              )}
+
+              {/* Interests */}
+              {!isEditing && user.interests && user.interests.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {user.interests.map(i => (
+                    <span key={i} className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium border border-primary/20">
+                      {i}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Social icons */}
+              {user.socialMedia && (
+                <div className="flex gap-2 mt-3">
+                  {user.socialMedia.instagram?.trim() && (
+                    <a href={user.socialMedia.instagram.startsWith("http") ? user.socialMedia.instagram : `https://instagram.com/${user.socialMedia.instagram.replace(/^@/, "")}`}
+                       target="_blank" rel="noopener noreferrer"
+                       className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-pink-100 dark:hover:bg-pink-900/30 text-pink-500 transition-colors">
+                      <Instagram size={15} />
+                    </a>
+                  )}
+                  {user.socialMedia.twitter?.trim() && (
+                    <a href={user.socialMedia.twitter.startsWith("http") ? user.socialMedia.twitter : `https://twitter.com/${user.socialMedia.twitter.replace(/^@/, "")}`}
+                       target="_blank" rel="noopener noreferrer"
+                       className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-sky-100 dark:hover:bg-sky-900/30 text-sky-500 transition-colors">
+                      <Twitter size={15} />
+                    </a>
+                  )}
+                  {user.socialMedia.facebook?.trim() && (
+                    <a href={user.socialMedia.facebook.startsWith("http") ? user.socialMedia.facebook : `https://facebook.com/${user.socialMedia.facebook}`}
+                       target="_blank" rel="noopener noreferrer"
+                       className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 transition-colors">
+                      <Facebook size={15} />
+                    </a>
+                  )}
+                  {user.socialMedia.website?.trim() && (
+                    <a href={user.socialMedia.website} target="_blank" rel="noopener noreferrer"
+                       className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 transition-colors">
+                      <Globe size={15} />
+                    </a>
+                  )}
                 </div>
               )}
             </div>
-
-            <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
-
-            {/* Location */}
-            {user.location && (
-              <p className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                <MapPin size={13} /> {user.location}
-              </p>
-            )}
-
-            {/* Social icons */}
-            {user.socialMedia && (
-              <div className="flex gap-2 mt-3">
-                {user.socialMedia.instagram?.trim() && (
-                  <a href={user.socialMedia.instagram.startsWith("http") ? user.socialMedia.instagram : `https://instagram.com/${user.socialMedia.instagram.replace(/^@/, "")}`}
-                     target="_blank" rel="noopener noreferrer"
-                     className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-pink-100 text-pink-500 transition-colors">
-                    <Instagram size={16} />
-                  </a>
-                )}
-                {user.socialMedia.twitter?.trim() && (
-                  <a href={user.socialMedia.twitter.startsWith("http") ? user.socialMedia.twitter : `https://twitter.com/${user.socialMedia.twitter.replace(/^@/, "")}`}
-                     target="_blank" rel="noopener noreferrer"
-                     className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-sky-100 text-sky-500 transition-colors">
-                    <Twitter size={16} />
-                  </a>
-                )}
-                {user.socialMedia.facebook?.trim() && (
-                  <a href={user.socialMedia.facebook.startsWith("http") ? user.socialMedia.facebook : `https://facebook.com/${user.socialMedia.facebook}`}
-                     target="_blank" rel="noopener noreferrer"
-                     className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-blue-100 text-blue-600 transition-colors">
-                    <Facebook size={16} />
-                  </a>
-                )}
-                {user.socialMedia.website?.trim() && (
-                  <a href={user.socialMedia.website} target="_blank" rel="noopener noreferrer"
-                     className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-green-100 text-green-600 transition-colors">
-                    <Globe size={16} />
-                  </a>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
-        {/* ─── Bio ─────────────────────────────────────────────── */}
-        {!isEditing && (user.bio || user.interests?.length) && (
-          <div className="bg-card rounded-2xl border border-border px-6 py-5 mb-6">
-            {user.bio && <p className="text-sm text-muted-foreground leading-relaxed mb-3">{user.bio}</p>}
-            {user.interests && user.interests.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {user.interests.map(i => (
-                  <span key={i} className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium border border-primary/20">
-                    {i}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* ─── Main 2-col layout ───────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* ── Left (main) ── */}
           <div className="lg:col-span-2 space-y-6">
