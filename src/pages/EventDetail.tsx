@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { MapPin, Calendar, Clock, ArrowLeft, Users, UserCheck, Trash2, Check, X, Share2, Star, MessageSquare, CreditCard, Eye, Send, Loader } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -97,25 +97,26 @@ const EventDetail = () => {
   }, [id]);
 
   // 🗺️ MAP
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!event?.lat || !event?.lng) return;
-
+    if (!event?.lat || !event?.lng || !mapContainerRef.current) return;
+    let map: mapboxgl.Map | null = null;
     try {
-      const map = new mapboxgl.Map({
-        container: "map",
+      map = new mapboxgl.Map({
+        container: mapContainerRef.current,
         style: "mapbox://styles/mapbox/streets-v12",
         center: [event.lng, event.lat],
         zoom: 12,
       });
-
       new mapboxgl.Marker()
         .setLngLat([event.lng, event.lat])
         .addTo(map);
-
-      return () => map.remove();
     } catch (err) {
       console.error("Map error:", err);
     }
+    return () => {
+      if (map) map.remove();
+    };
   }, [event]);
 
   // 🔥 JOIN REQUEST
@@ -631,7 +632,7 @@ const EventDetail = () => {
             {event.lat && event.lng && (
               <div className="bg-card p-6 rounded-2xl border">
                 <h2 className="text-lg font-semibold mb-4">Location</h2>
-                <div id="map" className="w-full h-80 rounded-xl mb-4 border border-border" />
+                <div ref={mapContainerRef} className="w-full h-80 rounded-xl mb-4 border border-border" />
                 <a
                   href={`https://www.google.com/maps?q=${event.lat},${event.lng}`}
                   target="_blank"
