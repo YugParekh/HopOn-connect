@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, Edit2, Save, X, MapPin, Calendar, Users, Star, MessageCircle, Instagram, Twitter, Facebook, Globe } from "lucide-react";
+import { Camera, Edit2, Save, X, MapPin, Calendar, Users, Star, MessageCircle, Instagram, Twitter, Facebook, Globe, ShieldCheck } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { auth } from "@/firebase";
@@ -84,7 +84,6 @@ const Profile = () => {
       razorpayKeySecret: parsedUser.razorpayKeySecret || "",
     });
 
-    // Fetch user's events and reviews
     fetchUserData(parsedUser._id);
   }, [navigate]);
 
@@ -103,10 +102,7 @@ const Profile = () => {
       const userEvents = eventsData.filter((e: any) => e.userId === userId);
       setEvents(userEvents);
       setReviews(reviewsData);
-      if (trustData) {
-        setTrustScore(trustData);
-      }
-
+      if (trustData) setTrustScore(trustData);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -116,13 +112,9 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (!user) return;
-
     try {
       const token = await auth.currentUser?.getIdToken();
-      if (!token) {
-        alert("Please login again");
-        return;
-      }
+      if (!token) { alert("Please login again"); return; }
 
       const payload: Record<string, unknown> = {
         name: editForm.name,
@@ -138,27 +130,16 @@ const Profile = () => {
         razorpayKeyId: editForm.razorpayKeyId,
         razorpayKeySecret: editForm.razorpayKeySecret,
       };
-
-      if (photoDataUrl) {
-        payload.photoDataUrl = photoDataUrl;
-      }
+      if (photoDataUrl) payload.photoDataUrl = photoDataUrl;
 
       const response = await fetch(buildApiUrl("/api/users/update"), {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
+      if (!response.ok) throw new Error("Failed to update profile");
       const updatedUser = await response.json();
-
-      // Update localStorage
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
       setPhotoDataUrl(null);
@@ -173,7 +154,6 @@ const Profile = () => {
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = reader.result as string;
@@ -184,27 +164,31 @@ const Profile = () => {
   };
 
   const addInterest = (interest: string) => {
-    if (!editForm.interests.includes(interest)) {
-      setEditForm(prev => ({
-        ...prev,
-        interests: [...prev.interests, interest]
-      }));
+    const trimmed = interest.trim();
+    if (trimmed && !editForm.interests.includes(trimmed)) {
+      setEditForm(prev => ({ ...prev, interests: [...prev.interests, trimmed] }));
     }
   };
 
   const removeInterest = (interest: string) => {
-    setEditForm(prev => ({
-      ...prev,
-      interests: prev.interests.filter(i => i !== interest)
-    }));
+    setEditForm(prev => ({ ...prev, interests: prev.interests.filter(i => i !== interest) }));
   };
+
+  const trustColor = (score: number) =>
+    score >= 80 ? "bg-emerald-500" : score >= 60 ? "bg-blue-500" : score >= 40 ? "bg-amber-500" : "bg-red-400";
+
+  const trustLevelColor = (level: string) =>
+    level === "Verified" ? "text-emerald-600 bg-emerald-50 border-emerald-200" :
+    level === "Trusted"  ? "text-blue-600 bg-blue-50 border-blue-200" :
+    level === "Regular"  ? "text-amber-600 bg-amber-50 border-amber-200" :
+                           "text-muted-foreground bg-muted border-border";
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
         </div>
         <Footer />
       </div>
@@ -217,352 +201,275 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Profile Header */}
-        <div className="bg-card rounded-2xl p-8 mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            <div className="relative">
-              <img
-                src={photoPreview || user.photo || "https://via.placeholder.com/120"}
-                alt={user.name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
-              />
-              {isEditing && (
-                <button
-                  onClick={() => photoInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full"
-                >
-                  <Camera size={16} />
-                </button>
+      {/* ─── Hero Banner ─────────────────────────────────────── */}
+      <div className="h-40 bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-700 relative" />
+
+      {/* ─── Avatar row ──────────────────────────────────────── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14 mb-6">
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <img
+              src={photoPreview || user.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=128&background=000&color=fff`}
+              alt={user.name}
+              className="w-28 h-28 rounded-full object-cover border-4 border-background shadow-lg"
+            />
+            {isEditing && (
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                className="absolute bottom-1 right-1 bg-primary text-primary-foreground p-1.5 rounded-full shadow hover:opacity-90 transition"
+              >
+                <Camera size={14} />
+              </button>
+            )}
+            <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+          </div>
+
+          {/* Name + actions */}
+          <div className="flex-1 pb-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{user.name}</h1>
+
+              {/* Trust level pill */}
+              {trustScore && (
+                <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${trustLevelColor(trustScore.level)}`}>
+                  <ShieldCheck size={13} />
+                  {trustScore.level}
+                </span>
               )}
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
+
+              {/* Edit / Save / Cancel */}
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="ml-auto flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full border border-border hover:bg-muted transition-colors"
+                >
+                  <Edit2 size={14} /> Edit Profile
+                </button>
+              ) : (
+                <div className="ml-auto flex gap-2">
+                  <button onClick={handleSave} className="flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition">
+                    <Save size={14} /> Save
+                  </button>
+                  <button onClick={() => setIsEditing(false)} className="flex items-center gap-1.5 text-sm font-medium px-4 py-1.5 rounded-full border border-border hover:bg-muted transition-colors">
+                    <X size={14} /> Cancel
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-2">
-                <h1 className="text-3xl font-bold">{user.name}</h1>
-                {!isEditing ? (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="p-2 hover:bg-muted rounded-full transition-colors"
-                  >
-                    <Edit2 size={20} />
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSave}
-                      className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
-                    >
-                      <Save size={16} />
-                    </button>
-                    <button
-                      onClick={() => setIsEditing(false)}
-                      className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
+            <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+
+            {/* Location */}
+            {user.location && (
+              <p className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                <MapPin size={13} /> {user.location}
+              </p>
+            )}
+
+            {/* Social icons */}
+            {user.socialMedia && (
+              <div className="flex gap-2 mt-3">
+                {user.socialMedia.instagram?.trim() && (
+                  <a href={user.socialMedia.instagram.startsWith("http") ? user.socialMedia.instagram : `https://instagram.com/${user.socialMedia.instagram.replace(/^@/, "")}`}
+                     target="_blank" rel="noopener noreferrer"
+                     className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-pink-100 text-pink-500 transition-colors">
+                    <Instagram size={16} />
+                  </a>
+                )}
+                {user.socialMedia.twitter?.trim() && (
+                  <a href={user.socialMedia.twitter.startsWith("http") ? user.socialMedia.twitter : `https://twitter.com/${user.socialMedia.twitter.replace(/^@/, "")}`}
+                     target="_blank" rel="noopener noreferrer"
+                     className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-sky-100 text-sky-500 transition-colors">
+                    <Twitter size={16} />
+                  </a>
+                )}
+                {user.socialMedia.facebook?.trim() && (
+                  <a href={user.socialMedia.facebook.startsWith("http") ? user.socialMedia.facebook : `https://facebook.com/${user.socialMedia.facebook}`}
+                     target="_blank" rel="noopener noreferrer"
+                     className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-blue-100 text-blue-600 transition-colors">
+                    <Facebook size={16} />
+                  </a>
+                )}
+                {user.socialMedia.website?.trim() && (
+                  <a href={user.socialMedia.website} target="_blank" rel="noopener noreferrer"
+                     className="w-8 h-8 flex items-center justify-center rounded-full bg-muted hover:bg-green-100 text-green-600 transition-colors">
+                    <Globe size={16} />
+                  </a>
                 )}
               </div>
-
-
-              <p className="text-muted-foreground mb-4">{user.email}</p>
-
-              {/* Social Media Icons */}
-              {user.socialMedia && (
-                <div className="flex gap-3 mb-4">
-                  {user.socialMedia.instagram && user.socialMedia.instagram.trim() && (
-                    <a
-                      href={user.socialMedia.instagram.startsWith('http') ? user.socialMedia.instagram : `https://instagram.com/${user.socialMedia.instagram.replace(/^@/, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-primary/80 transition-colors text-pink-500"
-                      title="Instagram"
-                    >
-                      <Instagram size={20} />
-                    </a>
-                  )}
-                  {user.socialMedia.twitter && user.socialMedia.twitter.trim() && (
-                    <a
-                      href={user.socialMedia.twitter.startsWith('http') ? user.socialMedia.twitter : `https://twitter.com/${user.socialMedia.twitter.replace(/^@/, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-primary/80 transition-colors text-sky-500"
-                      title="Twitter"
-                    >
-                      <Twitter size={20} />
-                    </a>
-                  )}
-                  {user.socialMedia.facebook && user.socialMedia.facebook.trim() && (
-                    <a
-                      href={user.socialMedia.facebook.startsWith('http') ? user.socialMedia.facebook : `https://facebook.com/${user.socialMedia.facebook}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-primary/80 transition-colors text-blue-600"
-                      title="Facebook"
-                    >
-                      <Facebook size={20} />
-                    </a>
-                  )}
-                  {user.socialMedia.website && user.socialMedia.website.trim() && (
-                    <a
-                      href={user.socialMedia.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-muted hover:bg-primary/80 transition-colors text-green-700 dark:text-green-400"
-                      title="Website"
-                    >
-                      <Globe size={20} />
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {/* Trust Score Badge */}
-              {trustScore && (
-                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20">
-                  <Star size={18} className={trustScore.score >= 80 ? "fill-yellow-400 text-yellow-400" : "text-yellow-300"} />
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Trust Score</p>
-                    <p className="text-sm font-semibold">{trustScore.score.toFixed(0)}/100 • {trustScore.level}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Bio */}
-              {isEditing ? (
-                <textarea
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder="Tell us about yourself..."
-                  className="w-full p-3 border border-border rounded-lg resize-none"
-                  rows={3}
-                />
-              ) : (
-                <p className="text-muted-foreground">{user.bio || "No bio yet"}</p>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+        {/* ─── Bio ─────────────────────────────────────────────── */}
+        {!isEditing && (user.bio || user.interests?.length) && (
+          <div className="bg-card rounded-2xl border border-border px-6 py-5 mb-6">
+            {user.bio && <p className="text-sm text-muted-foreground leading-relaxed mb-3">{user.bio}</p>}
+            {user.interests && user.interests.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {user.interests.map(i => (
+                  <span key={i} className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium border border-primary/20">
+                    {i}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Main 2-col layout ───────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-16">
+
+          {/* ── Left (main) ── */}
+          <div className="lg:col-span-2 space-y-6">
+
             {/* Edit Form */}
             {isEditing && (
-              <div className="bg-card rounded-2xl p-6">
-                <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
+              <div className="bg-card rounded-2xl border border-border p-6 space-y-5">
+                <h2 className="text-lg font-semibold">Edit Profile</h2>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Name</label>
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full p-3 border border-border rounded-lg"
-                    />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Name</label>
+                    <input type="text" value={editForm.name}
+                      onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))}
+                      className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/40" />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Location</label>
-                    <input
-                      type="text"
-                      value={editForm.location}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, location: e.target.value }))}
-                      className="w-full p-3 border border-border rounded-lg"
-                      placeholder="City, Country"
-                    />
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Bio</label>
+                    <textarea value={editForm.bio}
+                      onChange={e => setEditForm(p => ({ ...p, bio: e.target.value }))}
+                      placeholder="Tell people about yourself…"
+                      rows={3}
+                      className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/40" />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Interests</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Location</label>
+                    <input type="text" value={editForm.location} placeholder="City, Country"
+                      onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))}
+                      className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Interests</label>
                     <div className="flex flex-wrap gap-2 mb-2">
                       {editForm.interests.map(interest => (
-                        <span key={interest} className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                        <span key={interest} className="flex items-center gap-1 text-xs bg-primary text-primary-foreground px-3 py-1 rounded-full">
                           {interest}
-                          <X size={14} className="cursor-pointer" onClick={() => removeInterest(interest)} />
+                          <X size={12} className="cursor-pointer opacity-70 hover:opacity-100" onClick={() => removeInterest(interest)} />
                         </span>
                       ))}
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Add interest and press Enter"
-                      className="w-full p-3 border border-border rounded-lg"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
+                    <input type="text" placeholder="Type interest and press Enter"
+                      className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      onKeyDown={e => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
                           addInterest((e.target as HTMLInputElement).value);
-                          (e.target as HTMLInputElement).value = '';
+                          (e.target as HTMLInputElement).value = "";
                         }
-                      }}
-                    />
+                      }} />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                        <Instagram size={16} />
-                        Instagram
+                  {/* Social media */}
+                  {[
+                    { key: "instagram", icon: <Instagram size={14} />, placeholder: "@username" },
+                    { key: "twitter",   icon: <Twitter   size={14} />, placeholder: "@username" },
+                    { key: "facebook",  icon: <Facebook  size={14} />, placeholder: "facebook.com/username" },
+                    { key: "website",   icon: <Globe     size={14} />, placeholder: "https://yoursite.com" },
+                  ].map(({ key, icon, placeholder }) => (
+                    <div key={key}>
+                      <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">
+                        {icon} {key.charAt(0).toUpperCase() + key.slice(1)}
                       </label>
-                      <input
-                        type="text"
-                        value={editForm.instagram}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, instagram: e.target.value }))}
-                        className="w-full p-3 border border-border rounded-lg"
-                        placeholder="@username"
-                      />
+                      <input type="text" value={(editForm as any)[key]} placeholder={placeholder}
+                        onChange={e => setEditForm(p => ({ ...p, [key]: e.target.value }))}
+                        className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/40" />
                     </div>
+                  ))}
+                </div>
 
+                {/* Razorpay */}
+                <div className="pt-5 border-t border-border">
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">💳 Payment Account <span className="text-xs font-normal text-muted-foreground">(for hosting paid events)</span></h3>
+                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg px-4 py-3 mb-4 text-xs text-blue-800 dark:text-blue-300">
+                    Add your Razorpay API keys to accept payments. Money goes directly to your account.
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                        <Twitter size={16} />
-                        Twitter
-                      </label>
-                      <input
-                        type="text"
-                        value={editForm.twitter}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, twitter: e.target.value }))}
-                        className="w-full p-3 border border-border rounded-lg"
-                        placeholder="@username"
-                      />
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Key ID</label>
+                      <input type="password" value={editForm.razorpayKeyId} placeholder="rzp_live_xxxx"
+                        onChange={e => setEditForm(p => ({ ...p, razorpayKeyId: e.target.value }))}
+                        className="w-full px-3 py-2.5 text-sm font-mono border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/40" />
                     </div>
-
                     <div>
-                      <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                        <Facebook size={16} />
-                        Facebook
-                      </label>
-                      <input
-                        type="text"
-                        value={editForm.facebook}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, facebook: e.target.value }))}
-                        className="w-full p-3 border border-border rounded-lg"
-                        placeholder="facebook.com/username"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                        <Globe size={16} />
-                        Website
-                      </label>
-                      <input
-                        type="url"
-                        value={editForm.website}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, website: e.target.value }))}
-                        className="w-full p-3 border border-border rounded-lg"
-                        placeholder="https://yourwebsite.com"
-                      />
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase tracking-wide">Key Secret</label>
+                      <input type="password" value={editForm.razorpayKeySecret} placeholder="xxxxxxxxxxxx"
+                        onChange={e => setEditForm(p => ({ ...p, razorpayKeySecret: e.target.value }))}
+                        className="w-full px-3 py-2.5 text-sm font-mono border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/40" />
                     </div>
                   </div>
-
-                  {/* 💳 Razorpay Payment Account Setup */}
-                  <div className="mt-8 pt-8 border-t border-border">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      💳 Payment Account (for hosting paid events)
-                    </h3>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                      <p className="text-sm text-blue-900">
-                        <strong>How it works:</strong> Add your Razorpay API keys to accept payments from attendees. Money will be transferred directly to your Razorpay account.
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Razorpay Key ID</label>
-                        <input
-                          type="password"
-                          value={editForm.razorpayKeyId}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, razorpayKeyId: e.target.value }))}
-                          className="w-full p-3 border border-border rounded-lg font-mono text-xs"
-                          placeholder="rzp_live_xxxxxxxxxxxx"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Razorpay Key Secret</label>
-                        <input
-                          type="password"
-                          value={editForm.razorpayKeySecret}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, razorpayKeySecret: e.target.value }))}
-                          className="w-full p-3 border border-border rounded-lg font-mono text-xs"
-                          placeholder="xxxxxxxxxxxxxxxxxxxx"
-                        />
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Get your keys from <a href="https://dashboard.razorpay.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Razorpay Dashboard</a>
-                    </p>
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Get keys from <a href="https://dashboard.razorpay.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Razorpay Dashboard →</a>
+                  </p>
                 </div>
               </div>
             )}
 
             {/* Events Created */}
-            <div className="bg-card rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Calendar size={20} />
-                Events Created ({events.length})
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+                <Calendar size={17} className="text-muted-foreground" />
+                Events Created
+                <span className="ml-auto text-xs font-normal text-muted-foreground">{events.length} total</span>
               </h2>
 
               {events.length === 0 ? (
-                <p className="text-muted-foreground">No events created yet</p>
+                <p className="text-sm text-muted-foreground py-4 text-center">No events created yet</p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {events.map(event => (
-                    <div key={event._id} className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <h3 className="font-medium mb-2">{event.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">{event.date} • {event.location}</p>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users size={14} />
-                          {event.attendees?.length || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle size={14} />
-                          {event.requests?.length || 0}
-                        </span>
+                    <a key={event._id} href={`/event/${event._id}`}
+                       className="group block rounded-xl border border-border p-4 hover:border-primary/50 hover:shadow-sm transition-all">
+                      <h3 className="font-medium text-sm mb-1 line-clamp-1 group-hover:text-primary transition-colors">{event.title}</h3>
+                      <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{event.date} · {event.location}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Users size={12} />{event.attendees?.length || 0}</span>
+                        <span className="flex items-center gap-1"><MessageCircle size={12} />{event.requests?.length || 0} requests</span>
                       </div>
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}
             </div>
 
             {/* Reviews Given */}
-            <div className="bg-card rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Star size={20} />
-                Reviews Given ({reviews.length})
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+                <Star size={17} className="text-muted-foreground" />
+                Reviews Given
+                <span className="ml-auto text-xs font-normal text-muted-foreground">{reviews.length} total</span>
               </h2>
 
               {reviews.length === 0 ? (
-                <p className="text-muted-foreground">No reviews given yet</p>
+                <p className="text-sm text-muted-foreground py-4 text-center">No reviews given yet</p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {reviews.map(review => (
-                    <div key={review._id} className="border border-border rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex">
+                    <div key={review._id} className="rounded-xl border border-border p-4">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-0.5">
                           {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={16}
-                              className={i < review.rating ? "text-yellow-400 fill-current" : "text-muted-foreground/40"}
-                            />
+                            <Star key={i} size={14}
+                              className={i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"} />
                           ))}
                         </div>
-                        <span className="text-sm text-muted-foreground">• {review.eventTitle}</span>
+                        <span className="text-xs text-muted-foreground truncate max-w-[160px]">{review.eventTitle}</span>
                       </div>
-                      <p className="text-sm">{review.comment}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
                     </div>
                   ))}
                 </div>
@@ -570,113 +477,75 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Trust Score Details */}
+          {/* ── Right (sidebar) ── */}
+          <div className="space-y-5">
+
+            {/* Trust Score */}
             {trustScore && (
-              <div className="bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-2xl p-6 border border-blue-500/10">
-                <div className="flex items-center gap-2 mb-4">
-                  <Star size={20} className={trustScore.score >= 80 ? "fill-yellow-400 text-yellow-400" : "text-yellow-300"} />
-                  <h3 className="text-lg font-semibold">Trust Score</h3>
+              <div className="bg-card rounded-2xl border border-border p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-primary" /> Trust Score
+                  </h3>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${trustLevelColor(trustScore.level)}`}>
+                    {trustScore.level}
+                  </span>
                 </div>
 
-                {/* Score Bar */}
-                <div className="mb-4">
-                  <div className="flex items-end justify-between mb-2">
-                    <span className="text-3xl font-bold">{trustScore.score.toFixed(0)}</span>
+                <div className="mb-3">
+                  <div className="flex items-baseline gap-1 mb-2">
+                    <span className="text-4xl font-bold">{trustScore.score.toFixed(0)}</span>
                     <span className="text-sm text-muted-foreground">/100</span>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        trustScore.score >= 80 ? "bg-green-500" :
-                        trustScore.score >= 60 ? "bg-blue-500" :
-                        trustScore.score >= 40 ? "bg-yellow-500" : "bg-red-500"
-                      }`}
-                      style={{ width: `${trustScore.score}%` }}
-                    />
+                  <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                    <div className={`h-2 rounded-full transition-all duration-700 ${trustColor(trustScore.score)}`}
+                         style={{ width: `${trustScore.score}%` }} />
                   </div>
                 </div>
 
-                {/* Level Badge */}
-                <div className="mb-4 inline-flex px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-primary">
-                  {trustScore.level}
-                </div>
-
-                {/* Breakdown */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Events Attended</span>
-                    <span className="font-medium">{trustScore.eventsAttended}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Cancellations</span>
-                    <span className="font-medium text-red-500">{trustScore.eventsCancelled}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Host Rating</span>
-                    <span className="font-medium">{trustScore.hostRating.toFixed(1)}/5</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Attendee Rating</span>
-                    <span className="font-medium">{trustScore.attendeeRating.toFixed(1)}/5</span>
-                  </div>
+                <div className="space-y-2.5 pt-3 border-t border-border">
+                  {[
+                    { label: "Events Attended", value: trustScore.eventsAttended },
+                    { label: "Cancellations",   value: trustScore.eventsCancelled, danger: true },
+                    { label: "Host Rating",     value: `${trustScore.hostRating.toFixed(1)} / 5` },
+                    { label: "Attendee Rating", value: `${trustScore.attendeeRating.toFixed(1)} / 5` },
+                  ].map(row => (
+                    <div key={row.label} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{row.label}</span>
+                      <span className={`font-medium ${row.danger && row.value > 0 ? "text-red-500" : ""}`}>{row.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
             {/* Stats */}
-            <div className="bg-card rounded-2xl p-6">
-              <h3 className="text-lg font-semibold mb-4">Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Events Created</span>
-                  <span className="font-medium">{events.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Events Joined</span>
-                  <span className="font-medium">{user.stats?.eventsJoined || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Reviews Given</span>
-                  <span className="font-medium">{reviews.length}</span>
-                </div>
+            <div className="bg-card rounded-2xl border border-border p-5">
+              <h3 className="text-sm font-semibold mb-4">Activity</h3>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  { label: "Created",  value: events.length },
+                  { label: "Joined",   value: user.stats?.eventsJoined || 0 },
+                  { label: "Reviews",  value: reviews.length },
+                ].map(stat => (
+                  <div key={stat.label} className="bg-muted/50 rounded-xl py-3 px-2">
+                    <p className="text-xl font-bold">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Social Media Links */}
-            {user.socialMedia && Object.values(user.socialMedia).some(link => link) && (
-              <div className="bg-card rounded-2xl p-6">
-                <h3 className="text-lg font-semibold mb-4">Connect</h3>
-                <div className="space-y-3">
-                  {user.socialMedia.instagram && (
-                    <a href={`https://instagram.com/${user.socialMedia.instagram}`} target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg transition-colors">
-                      <Instagram size={20} />
-                      <span>Instagram</span>
-                    </a>
-                  )}
-                  {user.socialMedia.twitter && (
-                    <a href={`https://twitter.com/${user.socialMedia.twitter}`} target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg transition-colors">
-                      <Twitter size={20} />
-                      <span>Twitter</span>
-                    </a>
-                  )}
-                  {user.socialMedia.facebook && (
-                    <a href={`https://facebook.com/${user.socialMedia.facebook}`} target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg transition-colors">
-                      <Facebook size={20} />
-                      <span>Facebook</span>
-                    </a>
-                  )}
-                  {user.socialMedia.website && (
-                    <a href={user.socialMedia.website} target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg transition-colors">
-                      <Globe size={20} />
-                      <span>Website</span>
-                    </a>
-                  )}
+            {/* Interests (view-only when not editing) */}
+            {!isEditing && user.interests && user.interests.length > 0 && (
+              <div className="bg-card rounded-2xl border border-border p-5">
+                <h3 className="text-sm font-semibold mb-3">Interests</h3>
+                <div className="flex flex-wrap gap-2">
+                  {user.interests.map(i => (
+                    <span key={i} className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary font-medium border border-primary/20">
+                      {i}
+                    </span>
+                  ))}
                 </div>
               </div>
             )}
