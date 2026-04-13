@@ -230,4 +230,47 @@ router.post("/generate-description", aiLimiter, validateAiIdeaBody, async (req, 
   }
 });
 
+// ================= EVENT AI CHAT =================
+router.post("/chat", aiLimiter, async (req, res) => {
+  try {
+    const { eventContext, question } = req.body;
+
+    if (!question || !question.trim()) {
+      return res.status(400).json({ error: "Question is required" });
+    }
+
+    const prompt = `You are a helpful assistant for a social events platform called HopOn. 
+A user is asking about a specific event. Answer their question concisely and practically (2-4 sentences max).
+
+Event Details:
+${eventContext || "No event details provided"}
+
+User Question: ${question}
+
+Answer:`;
+
+    // Try Gemini first
+    const geminiResult = await generateWithGemini(prompt);
+    if (geminiResult.ok) {
+      return res.json({ ok: true, text: geminiResult.text, source: "gemini" });
+    }
+
+    // Fall back to Groq
+    const groqResult = await generateWithGroq(prompt);
+    if (groqResult.ok) {
+      return res.json({ ok: true, text: groqResult.text, source: "groq" });
+    }
+
+    // Final fallback — generic helpful response
+    res.json({
+      ok: true,
+      text: "This event looks exciting! Check the event description for full details, or contact the host directly for specific questions.",
+      source: "fallback",
+    });
+  } catch (err) {
+    console.error("❌ CHAT ERROR:", err);
+    res.status(500).json({ error: err?.message || "Chat failed" });
+  }
+});
+
 module.exports = router;

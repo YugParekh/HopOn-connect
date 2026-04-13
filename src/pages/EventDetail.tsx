@@ -293,26 +293,18 @@ const EventDetail = () => {
     setAiLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ai/generate-description`, {
+      const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idea: `Event: ${event.title}
-Description: ${event.description}
-Location: ${event.location}
-Date: ${event.date}
-Time: ${event.time}
-Price: ${event.price}
-
-User Question: ${userMessage}
-
-Answer the user's question about this event concisely and helpfully. If they ask what to bring, what time to arrive, etc., give practical advice based on the event details.`,
+          question: userMessage,
+          eventContext: `Title: ${event.title}\nDescription: ${event.description}\nLocation: ${event.location}\nDate: ${event.date}\nTime: ${event.time || "TBD"}\nPrice: ${event.price}\nCategory: ${event.category}`,
         }),
       });
 
       if (!response.ok) throw new Error("Failed to get AI response");
       const data = await response.json();
-      
+
       setAiMessages((prev) => [...prev, { role: "assistant", content: data.text || "I couldn't generate a response. Please try again." }]);
     } catch (err) {
       setAiMessages((prev) => [...prev, { role: "assistant", content: "⚠️ Error getting response. Please try again later." }]);
