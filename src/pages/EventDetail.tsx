@@ -375,7 +375,7 @@ const EventDetail = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
       </div>
       <Footer />
     </div>
@@ -411,59 +411,68 @@ const EventDetail = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="container mx-auto px-4 pt-6 pb-12 max-w-6xl">
+      <div className="container mx-auto px-4 pt-6 pb-16 max-w-6xl">
         <div className="mb-6">
           <Link to="/explore" className="inline-flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2 rounded-full hover:bg-muted transition-colors">
             <ArrowLeft size={16} /> Back
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* MAIN CONTENT */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
             {/* TITLE & BASIC INFO */}
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">{event.title}</h1>
-              <div className="flex flex-wrap gap-4 text-muted-foreground mb-6">
-                <div className="flex items-center gap-2">
-                  <Calendar size={18} />
-                  <span>{event.date || "TBD"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={18} />
-                  <span>{event.time || "TBD"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin size={18} />
-                  <span>{event.location || "TBD"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users size={18} />
-                  <span>{event.attendees?.length || 0} / {event.capacity || "Unlimited"}</span>
+            <div className="bg-card p-6 rounded-2xl border">
+              <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-5 items-start">
+                <img
+                  src={event.image}
+                  alt={event.title}
+                  className="w-full h-44 md:h-36 rounded-xl object-cover border border-border"
+                />
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">{event.title}</h1>
+                  <div className="flex flex-wrap gap-4 text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={16} />
+                      <span className="text-sm">{event.date || "TBD"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock size={16} />
+                      <span className="text-sm">{event.time || "TBD"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin size={16} />
+                      <span className="text-sm">{event.location || "TBD"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users size={16} />
+                      <span className="text-sm">{event.attendees?.length || 0} / {event.capacity || "Unlimited"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* DESCRIPTION */}
             <div className="bg-card p-6 rounded-2xl border">
-              <h2 className="text-xl font-semibold mb-4">About This Event</h2>
+              <h2 className="text-lg font-semibold mb-3">About This Event</h2>
               <p className="text-muted-foreground leading-relaxed">{event.description}</p>
             </div>
 
             {/* ATTENDEES */}
             {event.attendees?.length > 0 && (
               <div className="bg-card p-6 rounded-2xl border">
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <UserCheck size={20} />
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <UserCheck size={18} />
                   Attendees ({event.attendees.length})
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {event.attendees.map((uid: string) => (
-                    <div key={uid} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <div key={uid} className="flex items-center gap-3 p-3 bg-muted rounded-lg border border-border/50">
                       <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
                         {uid.slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="text-sm">{uid}</span>
+                      <span className="text-sm truncate">{uid}</span>
                     </div>
                   ))}
                 </div>
@@ -474,8 +483,8 @@ const EventDetail = () => {
             {isEventEnded && (
               <div className="bg-card p-6 rounded-2xl border">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <Star size={20} />
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Star size={18} />
                     Reviews ({reviews.length})
                   </h2>
                   {isAttendee && !hasReviewed && (
@@ -489,11 +498,11 @@ const EventDetail = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                  <div className="p-3 rounded-lg bg-muted">
+                  <div className="p-3 rounded-lg bg-muted border border-border/50">
                     <p className="text-xs uppercase text-muted-foreground">Event Rating</p>
                     <p className="text-lg font-semibold">{eventAverageRating ? eventAverageRating.toFixed(1) : "N/A"} / 5</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-muted">
+                  <div className="p-3 rounded-lg bg-muted border border-border/50">
                     <p className="text-xs uppercase text-muted-foreground">Host Rating</p>
                     <p className="text-lg font-semibold">
                       {hostRatingSummary.totalHostRatings ? hostRatingSummary.averageHostRating.toFixed(1) : "N/A"} / 5
@@ -508,7 +517,7 @@ const EventDetail = () => {
 
                 {/* Review Form */}
                 {showReviewForm && (
-                  <div className="mb-6 p-4 bg-muted rounded-lg">
+                  <div className="mb-6 p-4 bg-muted rounded-lg border border-border/50">
                     <div className="mb-4">
                       <label className="block text-sm font-medium mb-2">Rating</label>
                       <div className="flex gap-1">
@@ -549,7 +558,7 @@ const EventDetail = () => {
                       value={reviewComment}
                       onChange={(e) => setReviewComment(e.target.value)}
                       placeholder="Share your experience..."
-                      className="w-full p-3 border border-border rounded-lg resize-none"
+                      className="w-full p-3 border border-border rounded-lg resize-none bg-background"
                       rows={3}
                     />
 
@@ -557,7 +566,7 @@ const EventDetail = () => {
                       value={hostComment}
                       onChange={(e) => setHostComment(e.target.value)}
                       placeholder="Share feedback about the host..."
-                      className="w-full p-3 border border-border rounded-lg resize-none mt-3"
+                      className="w-full p-3 border border-border rounded-lg resize-none mt-3 bg-background"
                       rows={3}
                     />
 
@@ -584,7 +593,7 @@ const EventDetail = () => {
                 ) : (
                   <div className="space-y-4">
                     {reviews.map((review) => (
-                      <div key={review._id} className="border border-border rounded-lg p-4">
+                      <div key={review._id} className="border border-border rounded-lg p-4 bg-card">
                         <div className="flex items-center gap-3 mb-2">
                           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
                             {review.username.slice(0, 2).toUpperCase()}
@@ -604,7 +613,7 @@ const EventDetail = () => {
                         </div>
                         <p className="text-sm text-muted-foreground">{review.comment}</p>
                         {review.hostRating ? (
-                          <div className="mt-2 p-2 rounded bg-muted/60">
+                          <div className="mt-2 p-2 rounded bg-muted/60 border border-border/50">
                             <p className="text-xs font-medium mb-1">Host Rating: {review.hostRating}/5</p>
                             {review.hostComment ? (
                               <p className="text-xs text-muted-foreground">{review.hostComment}</p>
@@ -621,8 +630,8 @@ const EventDetail = () => {
             {/* MAP */}
             {event.lat && event.lng && (
               <div className="bg-card p-6 rounded-2xl border">
-                <h2 className="text-xl font-semibold mb-4">Location</h2>
-                <div id="map" className="w-full h-80 rounded-xl mb-4" />
+                <h2 className="text-lg font-semibold mb-4">Location</h2>
+                <div id="map" className="w-full h-80 rounded-xl mb-4 border border-border" />
                 <a
                   href={`https://www.google.com/maps?q=${event.lat},${event.lng}`}
                   target="_blank"
@@ -637,29 +646,29 @@ const EventDetail = () => {
           </div>
 
           {/* SIDEBAR */}
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* ACTION CARD */}
-            <div className="bg-card p-6 rounded-2xl border sticky top-4">
+            <div className="bg-card p-6 rounded-2xl border sticky top-24 space-y-3">
               {!isHost && (
                 <div className="space-y-4">
                   {isAttendee ? (
-                    <div className="text-center p-4 bg-green-50 text-green-700 rounded-lg">
+                    <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-lg border border-emerald-200/70 dark:border-emerald-800/60">
                       <Check size={24} className="mx-auto mb-2" />
                       You're attending this event!
                     </div>
                   ) : isEventEnded ? (
-                    <div className="text-center p-4 bg-red-50 text-red-700 rounded-lg">
+                    <div className="text-center p-4 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded-lg border border-red-200/70 dark:border-red-800/60">
                       This event has ended. Joining is closed.
                     </div>
                   ) : hasRequested ? (
-                    <div className="text-center p-4 bg-yellow-50 text-yellow-700 rounded-lg">
+                    <div className="text-center p-4 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 rounded-lg border border-amber-200/70 dark:border-amber-800/60">
                       Request pending approval
                     </div>
                   ) : event.priceType === "paid" && event.price ? (
                     <button
                       onClick={handlePayment}
                       disabled={processingPayment}
-                      className="w-full bg-green-600 text-white py-3 rounded-full font-medium hover:bg-green-700 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full bg-emerald-600 text-white py-3 rounded-full font-medium hover:bg-emerald-700 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       <CreditCard size={18} />
                       Pay ₹{event.price} to Join
@@ -667,7 +676,7 @@ const EventDetail = () => {
                   ) : (
                     <button
                       onClick={handleJoin}
-                      className="w-full bg-black text-white py-3 rounded-full font-medium hover:opacity-90 transition-opacity"
+                      className="w-full bg-primary text-primary-foreground py-3 rounded-full font-medium hover:opacity-90 transition-opacity"
                     >
                       Request to Join
                     </button>
@@ -677,8 +686,8 @@ const EventDetail = () => {
 
               {/* PRICE BADGE */}
               {event.priceType === "paid" && event.price && (
-                <div className="bg-green-50 border border-green-200 p-3 rounded-lg mb-4">
-                  <p className="text-sm text-green-700">
+                <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800/60 p-3 rounded-lg mb-1">
+                  <p className="text-sm text-emerald-700 dark:text-emerald-300">
                     <strong>Price: ₹{event.price}</strong>
                   </p>
                 </div>
@@ -696,7 +705,7 @@ const EventDetail = () => {
               {/* ASK AI ABOUT EVENT */}
               <button
                 onClick={() => setShowAIChat(!showAIChat)}
-                className="w-full flex items-center justify-center gap-2 bg-purple-500 text-white py-3 rounded-full font-medium hover:bg-purple-600 transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-violet-600 text-white py-3 rounded-full font-medium hover:bg-violet-700 transition-colors"
               >
                 <MessageSquare size={18} />
                 Ask AI About This Event
