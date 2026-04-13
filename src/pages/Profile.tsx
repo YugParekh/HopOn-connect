@@ -201,7 +201,7 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 pb-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-16">
 
         {/* ─── Profile Header Card ─────────────────────────────── */}
         <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 mb-6">
