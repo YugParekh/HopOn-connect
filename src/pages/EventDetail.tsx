@@ -29,6 +29,9 @@ const EventDetail = () => {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [requestDetails, setRequestDetails] = useState<any[]>([]);
   const [selectedRequester, setSelectedRequester] = useState<any | null>(null);
+  const [distanceLabel, setDistanceLabel] = useState<string>("");
+  const [locatingUser, setLocatingUser] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   
   // AI Chat state
   const [showAIChat, setShowAIChat] = useState(false);
@@ -37,6 +40,80 @@ const EventDetail = () => {
   const [aiLoading, setAiLoading] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const formatDistanceToVenue = (userLat: number, userLng: number, venueLat: number, venueLng: number) => {
+    const toRadians = (deg: number) => (deg * Math.PI) / 180;
+    const earthRadiusKm = 6371;
+    const latDiff = toRadians(venueLat - userLat);
+    const lngDiff = toRadians(venueLng - userLng);
+
+    const a =
+      Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+      Math.cos(toRadians(userLat)) *
+        Math.cos(toRadians(venueLat)) *
+        Math.sin(lngDiff / 2) *
+        Math.sin(lngDiff / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distanceKm = earthRadiusKm * c;
+
+    if (distanceKm < 1) {
+      return `${Math.round(distanceKm * 1000)} m away`;
+    }
+
+    return `${distanceKm.toFixed(1)} km away`;
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!event?.lat || !event?.lng) return;
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported in this browser.");
+      return;
+    }
+
+    setLocatingUser(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const venueLat = Number(event.lat);
+        const venueLng = Number(event.lng);
+
+        if (Number.isNaN(venueLat) || Number.isNaN(venueLng)) {
+          setLocationError("Venue coordinates are invalid.");
+          setDistanceLabel("");
+          setLocatingUser(false);
+          return;
+        }
+
+        const distance = formatDistanceToVenue(
+          position.coords.latitude,
+          position.coords.longitude,
+          venueLat,
+          venueLng
+        );
+        setDistanceLabel(distance);
+        setLocatingUser(false);
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError("Location permission denied. Please allow access to calculate distance.");
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setLocationError("Current location is unavailable right now.");
+        } else if (error.code === error.TIMEOUT) {
+          setLocationError("Location request timed out. Please try again.");
+        } else {
+          setLocationError("Could not get your location.");
+        }
+        setDistanceLabel("");
+        setLocatingUser(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    );
+  };
 
   const getEventDateTime = (eventDate?: string, eventTime?: string) => {
     if (!eventDate) return null;
@@ -633,6 +710,21 @@ const EventDetail = () => {
               <div className="bg-card p-6 rounded-2xl border">
                 <h2 className="text-lg font-semibold mb-4">Location</h2>
                 <div ref={mapContainerRef} className="w-full h-80 rounded-xl mb-4 border border-border" />
+                <div className="flex flex-wrap items-center gap-3 mb-3">
+                  <button
+                    onClick={handleUseCurrentLocation}
+                    disabled={locatingUser}
+                    className="px-4 py-2 rounded-full border border-border text-sm hover:bg-muted transition-colors disabled:opacity-60"
+                  >
+                    {locatingUser ? "Calculating distance..." : "Use current location"}
+                  </button>
+                  {distanceLabel ? (
+                    <span className="text-sm text-foreground font-medium">{distanceLabel}</span>
+                  ) : null}
+                </div>
+                {locationError ? (
+                  <p className="text-sm text-red-600 dark:text-red-400 mb-2">{locationError}</p>
+                ) : null}
                 <a
                   href={`https://www.google.com/maps?q=${event.lat},${event.lng}`}
                   target="_blank"
