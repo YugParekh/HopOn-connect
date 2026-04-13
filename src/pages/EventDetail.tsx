@@ -388,7 +388,7 @@ const EventDetail = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Error</h2>
           <p className="text-muted-foreground">{error}</p>
-          <Link to="/explore" className="mt-4 inline-block bg-black text-white px-6 py-2 rounded-full">
+          <Link to="/explore" className="mt-4 inline-block bg-primary text-primary-foreground px-6 py-2 rounded-full">
             Back to Explore
           </Link>
         </div>
@@ -411,18 +411,13 @@ const EventDetail = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* HERO IMAGE */}
-      <div className="relative h-[60vh] overflow-hidden">
-        <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute top-4 left-4">
-          <Link to="/explore" className="flex items-center gap-2 bg-background/90 backdrop-blur-sm text-foreground px-4 py-2 rounded-full hover:bg-muted transition-colors">
+      <div className="container mx-auto px-4 pt-6 pb-12 max-w-6xl">
+        <div className="mb-6">
+          <Link to="/explore" className="inline-flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2 rounded-full hover:bg-muted transition-colors">
             <ArrowLeft size={16} /> Back
           </Link>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-12 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* MAIN CONTENT */}
           <div className="lg:col-span-2 space-y-8">
