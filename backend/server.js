@@ -9,9 +9,24 @@ require("./config/db");
 
 const app = express();
 const server = http.createServer(app);
+
+const defaultOrigins = [
+  "http://localhost:8080",
+  "http://localhost:5173",
+  "http://127.0.0.1:8080",
+  "http://127.0.0.1:5173",
+];
+
+const envOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
+
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:8080", "http://localhost:5173", "http://127.0.0.1:8080", "http://127.0.0.1:5173"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
   transports: ["websocket", "polling"],
@@ -19,7 +34,7 @@ const io = socketIo(server, {
   pingTimeout: 60000,
 });
 
-app.use(cors());
+app.use(cors({ origin: allowedOrigins }));
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 

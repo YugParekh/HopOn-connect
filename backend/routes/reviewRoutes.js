@@ -106,6 +106,15 @@ router.post("/", async (req, res) => {
       eventTitle: eventTitle || event.title || "",
     });
 
+    // Update trust scores for both user and host
+    try {
+      // This is async but we don't wait for it
+      fetch(`${process.env.BACKEND_URL || 'http://localhost:5002'}/api/users/update-trust-score/${userId}`).catch(() => {});
+      fetch(`${process.env.BACKEND_URL || 'http://localhost:5002'}/api/users/update-trust-score/${event.userId}`).catch(() => {});
+    } catch (err) {
+      // Silent fail - trust score update is not critical
+    }
+
     res.json(review);
   } catch (error) {
     if (error?.code === 11000) {

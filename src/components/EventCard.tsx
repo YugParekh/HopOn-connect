@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, ArrowRight } from "lucide-react";
+import { MapPin, Calendar, ArrowRight, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface EventCardProps {
   id: string;
@@ -11,7 +12,28 @@ interface EventCardProps {
   category: string;
 }
 
-const EventCard = ({ id, title, date, location, price, image, category }: EventCardProps) => (
+const EventCard = ({ id, title, date, location, price, image, category }: EventCardProps) => {
+  const [rating, setRating] = useState<{ average: number; count: number } | null>(null);
+
+  useEffect(() => {
+    // Fetch event reviews to calculate average rating
+    const fetchRating = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5002'}/api/reviews/event/${id}`);
+        if (!res.ok) return;
+        const reviews = await res.json();
+        if (reviews.length === 0) return;
+        
+        const avgRating = reviews.reduce((sum: number, r: any) => sum + (r.eventRating || 0), 0) / reviews.length;
+        setRating({ average: Math.round(avgRating * 10) / 10, count: reviews.length });
+      } catch (err) {
+        // Silently fail - rating is optional
+      }
+    };
+    fetchRating();
+  }, [id]);
+
+  return (
   <Link
     to={`/event/${id}`}
     className="group block bg-card rounded-2xl overflow-hidden border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
@@ -41,6 +63,13 @@ const EventCard = ({ id, title, date, location, price, image, category }: EventC
       </div>
       <div className="flex items-center justify-between">
         <span className="font-semibold text-foreground">{price}</span>
+        {rating && (
+          <div className="flex items-center gap-1">
+            <Star size={14} className="fill-yellow-400 text-yellow-400" />
+            <span className="text-xs font-medium text-foreground">{rating.average}</span>
+            <span className="text-xs text-muted-foreground">({rating.count})</span>
+          </div>
+        )}
         <span className="flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
           View details <ArrowRight size={14} />
         </span>

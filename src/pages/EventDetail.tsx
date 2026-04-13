@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { MapPin, Calendar, Clock, ArrowLeft, Users, UserCheck, Trash2, Check, X, Share2, Star, MessageSquare, CreditCard, Eye } from "lucide-react";
+import { MapPin, Calendar, Clock, ArrowLeft, Users, UserCheck, Trash2, Check, X, Share2, Star, MessageSquare, CreditCard, Eye, Send, Loader } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { MAPBOX_TOKEN } from "@/mapbox";
@@ -29,6 +29,12 @@ const EventDetail = () => {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [requestDetails, setRequestDetails] = useState<any[]>([]);
   const [selectedRequester, setSelectedRequester] = useState<any | null>(null);
+  
+  // AI Chat state
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [aiMessages, setAiMessages] = useState<{ role: string; content: string }[]>([]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -274,6 +280,44 @@ const EventDetail = () => {
     } catch (err: any) {
       alert("Payment error: " + err.message);
       setProcessingPayment(false);
+    }
+  };
+
+  // 🤖 AI CHAT HANDLER
+  const sendAIMessage = async () => {
+    if (!aiInput.trim() || !event) return;
+
+    const userMessage = aiInput;
+    setAiInput("");
+    setAiMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setAiLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/ai/generate-description`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idea: `Event: ${event.title}
+Description: ${event.description}
+Location: ${event.location}
+Date: ${event.date}
+Time: ${event.time}
+Price: ${event.price}
+
+User Question: ${userMessage}
+
+Answer the user's question about this event concisely and helpfully. If they ask what to bring, what time to arrive, etc., give practical advice based on the event details.`,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to get AI response");
+      const data = await response.json();
+      
+      setAiMessages((prev) => [...prev, { role: "assistant", content: data.text || "I couldn't generate a response. Please try again." }]);
+    } catch (err) {
+      setAiMessages((prev) => [...prev, { role: "assistant", content: "⚠️ Error getting response. Please try again later." }]);
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -662,6 +706,15 @@ const EventDetail = () => {
                 Share Event
               </button>
 
+              {/* ASK AI ABOUT EVENT */}
+              <button
+                onClick={() => setShowAIChat(!showAIChat)}
+                className="w-full flex items-center justify-center gap-2 bg-purple-500 text-white py-3 rounded-full font-medium hover:bg-purple-600 transition-colors"
+              >
+                <MessageSquare size={18} />
+                Ask AI About This Event
+              </button>
+
               {/* EVENT CHAT */}
               <Link
                 to={`/chat/${event._id}`}
@@ -752,6 +805,79 @@ const EventDetail = () => {
                   <Trash2 size={18} />
                   Delete Event
                 </button>
+              </div>
+            )}
+
+            {/* AI CHAT MODAL */}
+            {showAIChat && (
+              <div className="bg-card p-6 rounded-2xl border">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    🤖 Ask AI
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowAIChat(false);
+                      setAiMessages([]);
+                      setAiInput("");
+                    }}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="bg-muted rounded-lg p-4 mb-4 h-64 overflow-y-auto space-y-3">
+                  {aiMessages.length === 0 ? (
+                    <div className="text-center text-muted-foreground text-sm py-8">
+                      <p className="mb-2">💬 Ask questions about this event!</p>
+                      <p className="text-xs">Examples: "What should I bring?", "Summarize this event", "What's the dress code?"</p>
+                    </div>
+                  ) : (
+                    aiMessages.map((msg, idx) => (
+                      <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                        <div
+                          className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
+                            msg.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-background border border-border text-foreground"
+                          }`}
+                        >
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  {aiLoading && (
+                    <div className="flex justify-start">
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                        <Loader size={16} className="animate-spin" />
+                        <span className="text-sm text-muted-foreground">Thinking...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && !aiLoading && sendAIMessage()}
+                    placeholder="Ask something..."
+                    disabled={aiLoading}
+                    className="flex-1 px-4 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  />
+                  <button
+                    onClick={sendAIMessage}
+                    disabled={aiLoading || !aiInput.trim()}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
               </div>
             )}
           </div>

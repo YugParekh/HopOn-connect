@@ -25,6 +25,16 @@ interface UserProfile {
     eventsJoined: number;
     reviewsGiven: number;
   };
+  trustScore?: number;
+}
+
+interface TrustScoreData {
+  score: number;
+  level: string;
+  eventsAttended: number;
+  eventsCancelled: number;
+  hostRating: number;
+  attendeeRating: number;
 }
 
 const Profile = () => {
@@ -36,6 +46,7 @@ const Profile = () => {
   const [reviews, setReviews] = useState<any[]>([]);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  const [trustScore, setTrustScore] = useState<TrustScoreData | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const [editForm, setEditForm] = useState({
@@ -79,17 +90,22 @@ const Profile = () => {
 
   const fetchUserData = async (userId: string) => {
     try {
-      const [eventsRes, reviewsRes] = await Promise.all([
+      const [eventsRes, reviewsRes, trustRes] = await Promise.all([
         fetch(buildApiUrl("/api/posts")),
-        fetch(buildApiUrl(`/api/reviews?userId=${userId}`))
+        fetch(buildApiUrl(`/api/reviews?userId=${userId}`)),
+        fetch(buildApiUrl(`/api/users/trust-score/${userId}`))
       ]);
 
       const eventsData = await eventsRes.json();
       const reviewsData = await reviewsRes.json();
+      const trustData = trustRes.ok ? await trustRes.json() : null;
 
       const userEvents = eventsData.filter((e: any) => e.userId === userId);
       setEvents(userEvents);
       setReviews(reviewsData);
+      if (trustData) {
+        setTrustScore(trustData);
+      }
 
       setLoading(false);
     } catch (error) {
@@ -306,6 +322,17 @@ const Profile = () => {
                       <Globe size={20} />
                     </a>
                   )}
+                </div>
+              )}
+
+              {/* Trust Score Badge */}
+              {trustScore && (
+                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20">
+                  <Star size={18} className={trustScore.score >= 80 ? "fill-yellow-400 text-yellow-400" : "text-yellow-300"} />
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Trust Score</p>
+                    <p className="text-sm font-semibold">{trustScore.score.toFixed(0)}/100 • {trustScore.level}</p>
+                  </div>
                 </div>
               )}
 
@@ -545,6 +572,59 @@ const Profile = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Trust Score Details */}
+            {trustScore && (
+              <div className="bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-2xl p-6 border border-blue-500/10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Star size={20} className={trustScore.score >= 80 ? "fill-yellow-400 text-yellow-400" : "text-yellow-300"} />
+                  <h3 className="text-lg font-semibold">Trust Score</h3>
+                </div>
+
+                {/* Score Bar */}
+                <div className="mb-4">
+                  <div className="flex items-end justify-between mb-2">
+                    <span className="text-3xl font-bold">{trustScore.score.toFixed(0)}</span>
+                    <span className="text-sm text-muted-foreground">/100</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        trustScore.score >= 80 ? "bg-green-500" :
+                        trustScore.score >= 60 ? "bg-blue-500" :
+                        trustScore.score >= 40 ? "bg-yellow-500" : "bg-red-500"
+                      }`}
+                      style={{ width: `${trustScore.score}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Level Badge */}
+                <div className="mb-4 inline-flex px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-primary">
+                  {trustScore.level}
+                </div>
+
+                {/* Breakdown */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Events Attended</span>
+                    <span className="font-medium">{trustScore.eventsAttended}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cancellations</span>
+                    <span className="font-medium text-red-500">{trustScore.eventsCancelled}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Host Rating</span>
+                    <span className="font-medium">{trustScore.hostRating.toFixed(1)}/5</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Attendee Rating</span>
+                    <span className="font-medium">{trustScore.attendeeRating.toFixed(1)}/5</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Stats */}
             <div className="bg-card rounded-2xl p-6">
               <h3 className="text-lg font-semibold mb-4">Stats</h3>
